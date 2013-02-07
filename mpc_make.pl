@@ -299,7 +299,7 @@ mpc_make.pl - Makes, cleans, or remakes your shizzle, whatever the weather.
   --check-mpc / --nocheck-mpc When making a directory check build files up to date first, clean & regenerate if not.
   --clean                     Clean the project file or directory
   --carryon / --nocarryon     If a build error is encountered, stop dead or keep going.
-  --exhaustive                Build every damn thing in sight.
+  --exhaustive                Build or clean every damn thing in sight.
   --make                      Build the project file or directory.
   --type                      The type of build file e.g. vc8, vc9, make, etc.. (see mwc.pl --help)
   --help                      Brief help message
@@ -311,35 +311,31 @@ mpc_make.pl - Makes, cleans, or remakes your shizzle, whatever the weather.
 
 =item B<--check-mpc / --nocheck-mpc>
 
-When making a directory check build files up to date first, clean & regenerate if not. Default is to B<--check-mpc> if action is B<--make>. Only works on directories.
+When making a directory check build files up-to-date first, clean & regenerate if not. Default is to B<--check-mpc> if action is B<--make>. Only works on directories.
 
 =item B<--clean>
 
-Clean the project file or directory. This action will occur automatically on directories if B<--check-mpc> is set, B<--make> is the action and the buildfiles are out of date.
+Clean the project file or directory. This action will occur automatically on directories if B<--check-mpc> is set, B<--make> is the action and the buildfiles are out of date. Can be combined with B<--make> to clean then make.
 
 =item B<--carryon / --nocarryon>
 
-If a build error is encountered making a particular file, stop dead or keep going onto further buildfiles. Default --nocarryon when making.
+If a build error is encountered making a particular file, stop dead (B<--nocarryon>) or ignore any errors & keep going (B<--carryon>) onto further buildfiles. Default B<--nocarryon> when making.
 
 =item B<--exhaustive>
 
-If the action is --make and we are processing a directory then find B<all> buildfiles therein and build them. Build equivalent of take off and nuke the site from orbit. B<Warning>: may cause false positive errors, but sometimes it's the only way to be sure. Default: B<off>.
+If the action is B<--make> (or B<--clean>) and we are processing a directory then find B<all> possible buildfiles thereunder & build (or clean) them. Build equivalent of take off and nuke the site from orbit. B<Warning>: may cause false positive errors, but sometimes it's the only way to be sure. Default: B<off>.
 
 =item B<--make>
 
-Build the project file or directory. This is the default action if none is specified.
+Build the project file or directory. This is the default action if none is specified. If a file: just gets on with it. If a directory will respect B<--check-mpc>
 
 =item B<--type>
 
-Set the type of project to be built. Defaults to B<make> if not set. See B<mwc.pl --help>.
-
-=item B<--help>
-
-Print a brief help message and exits.
+Set the type of project to be built. Defaults to B<--type make> if not set. See B<mwc.pl --help>.
 
 =item B<--man>
 
-Prints the manual page and exits.
+The full docs. If you can't see the 'DESCRIPTION' below this right now then this is for you...!
 
 =back
 
