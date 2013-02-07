@@ -21,38 +21,50 @@ Getopt::Long::Configure ('pass_through');
 
 my $man = 0;
 my $help = 0;
-my $make = '1';
+my $make = '';
 my $check_mpc = '';
 my $clean = '';
+my $debug_override = '';
 my $carryon = '';
 my $exhaustive = 0;
+my $squeaky = 0;
 my $left_over_args;
 my $ret;
 my $type = "make";
 ($ret, $left_over_args) = GetOptions('clean!' => \$clean,
                                      'check-mpc!' => \$check_mpc,
                                      'carryon!' => \$carryon,
+                                     'debug!' => \$debug_override,
                                      'exhaustive' => \$exhaustive,
                                      'make!' => \$make,
+                                     'squeaky' => \$squeaky,
                                      'type=s' => \$type,
                                      'help|?' => \$help,
                                      'man' => \$man) or pod2usage(2);
 
+my $config = 'Release';
+
+if ($debug_override == '')
+{
+  $config = 'Release';
+  my $splice_target = $ENV{SPLICE_TARGET};
+  $config = 'Debug' if ($splice_target =~ 'dev' || $splice_target =~ 'debug');
+}
+else
+{
+  $config = ($debug_override ? 'Debug' : 'Release');
+}
+
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
-if ($clean)
-{
-  $make = 0;
-  if ($carryon eq '')
-  {
-    $carryon = 1;
-  }
-}
+$check_mpc = 1 if ($make && $check_mpc eq '');
+#$clean = 1 if $squeaky;
+$make = 1 if ($make == '' && !$clean);
 
-if ($make && $check_mpc eq '')
+if ($clean && !$make)
 {
-    $check_mpc = 1;
+    $carryon = 1 if ($carryon eq '');
 }
 
 my($basePath) = (defined $FindBin::RealBin ? $FindBin::RealBin :
@@ -107,6 +119,31 @@ sub is_project_file
   return $match;
 }
 
+
+# Match an even 'lesser' build file on $_ e.g. a *.vcproj.filter or *.suo
+# or .depend file or anything tenuously related. Used with --exhaustive &
+# --squeaky
+sub is_anything
+{
+  my $match = 0;
+
+  if ($type =~ /^vc/)
+  {
+    $match = (/^.*\.ncb\z/s ||
+              /^.*\.ilk\z/s ||
+              /^.*\.sdf\z/s ||
+              /^.*\.suo\z/s ||
+              /^.*\.vcproj.*\z/s ||
+              /^.*\.vcxproj.*\z/s);
+  }
+  else # ($type =~ /^make/)
+  {
+    $match = (/^.depend\.*\z/s);
+  }
+  return $match;
+}
+
+
 # Record the modification time of $_ if
 # it is the oldest generated file or the most recently
 # modified mpc meta build file.
@@ -126,7 +163,7 @@ sub check_file_date
     if ($oldest_build_file == 0 ||
         $file_date < $oldest_build_file)
     {
-      print "Makefile date : $file_date $_\n";
+      print "$scriptname: Makefile date : $file_date $_\n";
       $oldest_build_file = $file_date;
     }
   }
@@ -144,7 +181,7 @@ sub check_file_date
     my $file_date = $sb->mtime;
     if ($file_date > $newest_mpc_file)
     {
-      print "MPC File date : $file_date $_\n";
+      print "$scriptname: MPC File date : $file_date $_\n";
       $newest_mpc_file = $file_date;
     }
   }
@@ -162,18 +199,24 @@ sub check_mpc_up_todate
   find(\&check_file_date, "$dir");
 
   my $rebuild_required = $newest_mpc_file > $oldest_build_file;
-  print "$scriptname: Detected MPC rebuild required...\n" if $rebuild_required;
+  print "$scriptname: $newest_mpc_file > $oldest_build_file Detected MPC rebuild required...\n" if $rebuild_required;
   return $rebuild_required;
 }
 
 sub call_build_file
 {
   my $mode = shift(@_);
+  my $command;
   print "$scriptname: Proceeding to $mode $File::Find::name...\n";
   my $ret = 0;
   if ($type =~ /^vc/)
   {
-
+    my $modeflag = '/build';
+    if (lc $mode eq 'clean')
+    {
+        $modeflag = '/clean';
+    }
+    $command = "cmd /c devenv.com $_ $modeflag $config";
   }
   else # ($type =~ /^make/)
   {
@@ -182,14 +225,14 @@ sub call_build_file
     {
         $clean = 'realclean';
     }
-    $ret = system("make $clean -f $_")
+    $command = "make $clean -f $_";
   }
-
+  $ret = system($command);
   if ($ret)
   {
     if (lc $mode ne 'clean' &&  !$carryon)
     {
-        die "ERROR: Trying to $mode $File::Find::name !!!\n";
+        die "ERROR: Trying to $mode $File::Find::name !!! command used: $command\n";
     }
     else
     {
@@ -228,6 +271,23 @@ sub make_dir
   find(\&if_build_file_make, "$dir");
 }
 
+sub if_build_file_delete
+{
+  if (is_workspace_file ||
+      is_project_file ||
+      ($exhaustive && is_anything))
+  {
+    print "$scriptname: deleting $File::Find::name\n";
+    unlink $_;
+  }
+}
+
+sub squeaky_dir
+{
+  my $dir = shift(@_);
+  find(\&if_build_file_delete, "$dir");
+}
+
 sub mpc_dir
 {
   my $dir = shift(@_);
@@ -243,20 +303,28 @@ sub mpc_dir
 }
 
 my @ARGS_LEFT;
+my $done_something;
 
 foreach my $file (@ARGV) {
-  print "File is $file\n";
+  # print "File is $file\n";
   if (-d $file)
   {
+    $done_something = 1;
     print "$scriptname: Processing directory $file...\n";
-    if ($check_mpc && check_mpc_up_todate($file))
-    {
-        clean_dir($file);
-        mpc_dir($file, @ARGV);
-    }
+    my $is_clean = 0;
     if ($clean)
     {
       clean_dir($file);
+      $is_clean = 1;
+    }
+    if ($squeaky)
+    {
+      squeaky_dir($file);
+    }
+    if ($check_mpc && check_mpc_up_todate($file))
+    {
+        clean_dir($file) if ! $is_clean;
+        mpc_dir($file, @ARGV);
     }
     if ($make)
     {
@@ -266,6 +334,8 @@ foreach my $file (@ARGV) {
   }
   elsif (-f $file)
   {
+    $done_something = 1;
+    print "$scriptname: Processing presumed buildfile $file...\n";
     if ($clean)
     {
       call_build_file('clean', $file);
@@ -283,6 +353,8 @@ foreach my $file (@ARGV) {
   }
 }
 
+pod2usage(2) if !$done_something;
+
 exit (0);
 
 __END__
@@ -293,15 +365,17 @@ mpc_make.pl - Makes, cleans, or remakes your shizzle, whatever the weather.
 
 =head1 SYNOPSIS
 
-[perl] mpc_make.pl [options] [files/dirs]
+[perl] mpc_make.pl [options] files/dirs
 
  Options:
   --check-mpc / --nocheck-mpc When making a directory check build files up to date first, clean & regenerate if not.
   --clean                     Clean the project file or directory
   --carryon / --nocarryon     If a build error is encountered, stop dead or keep going.
+  --debug / --nodebug         Override the default for this build, whatever that is (--nodebug == Release)
   --exhaustive                Build or clean every damn thing in sight.
   --make                      Build the project file or directory.
-  --type                      The type of build file e.g. vc8, vc9, make, etc.. (see mwc.pl --help)
+  --squeaky                   Try and clean up all generated files for the build type. Exercise extreme caution.
+  --type                      The type of build file e.g. vc8, vc9, make, javamake, javabat etc.. (see mwc.pl --help)
   --help                      Brief help message
   --man                       Full documentation
 
@@ -329,6 +403,10 @@ If the action is B<--make> (or B<--clean>) and we are processing a directory the
 
 Build the project file or directory. This is the default action if none is specified. If a file: just gets on with it. If a directory will respect B<--check-mpc>
 
+=item B<--squeaky>
+
+Try and clean up all generated files for the build type. Exercise extreme caution. It is generally very very unwise to use this without --clean. Be careful of pointing this anywhere there might be hand maintained files.
+
 =item B<--type>
 
 Set the type of project to be built. Defaults to B<--type make> if not set. See B<mwc.pl --help>.
@@ -341,7 +419,36 @@ The full docs. If you can't see the 'DESCRIPTION' below this right now then this
 
 =head1 DESCRIPTION
 
-B<This program> will read the given input file(s) and do something
-useful with the contents thereof.
+This tool lets you build files generated by MPC or directories containing MPC generated buildfiles generically. It
+can detect updates to MPC meta-buildfiles and regenerate buildfiles if required on the hoof, although  note it can
+only do this for one 'type' at a time thiough. This means If you are using this mode you shouldn't point it at root
+that has subtrees of a different type under it.
+
+E.g.:
+
+mpc.make.pl --make --type make --nocheck-mpc ./examples/dcps
+
+... is fine but:
+
+mpc.make.pl --make --type make --check-mpc ./examples/dcps
+
+... will probably not work as there are MPC files under there that can only be processed with the "--language chsharp"
+flags, or the "--type javamake". Basically, if your tree has one language (C== C++ for this purpose) and type of build
+file to be generated: it should all be aces.
+
+=head2 EXAMPLES
+
+=over 8
+
+=item B<mpc_make.pl .>
+
+Find any buildfiles of the default type (Makefile) in this directory or those below, find also any MPC files.
+If any MPC file is newer than the oldest buildfile (or there are no buildfiles) run clean on the existing buildfiles,
+regenerate fresh Makefiles. In any case: then build all projects.
+
+=item B<mpc_make.pl --squeaky --clean --check-mpc --type vc10 --src-co --nomake isocpp/>
+
+Clean any existing Visual Studio 2010 files then delete them. Regenerate Visual Studio 2010 files suitable for use in a
+OpenSplice source checkout format (--src-co) but do not then make them.
 
 =cut;
