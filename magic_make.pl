@@ -105,7 +105,6 @@ sub is_workspace_file
 sub is_project_file
 {
   my $match = 0;
-
   if ($type =~ /^vc/)
   {
     $match = (/^.*\.dsp\z/s ||
@@ -114,7 +113,8 @@ sub is_project_file
   }
   else # ($type =~ /^make/)
   {
-    $match = (/^Makefile\.*\z/s);
+    $match = (/^Makefile\..*\z/s);
+
   }
   return $match;
 }
@@ -133,12 +133,12 @@ sub is_anything
               /^.*\.ilk\z/s ||
               /^.*\.sdf\z/s ||
               /^.*\.suo\z/s ||
-              /^.*\.vcproj.*\z/s ||
-              /^.*\.vcxproj.*\z/s);
+              /^.*\.vcproj\..*\z/s ||
+              /^.*\.vcxproj\..*\z/s);
   }
   else # ($type =~ /^make/)
   {
-    $match = (/^.depend\.*\z/s);
+    $match = (/^.depend\..*\z/s);
   }
   return $match;
 }
@@ -361,11 +361,11 @@ __END__
 
 =head1 NAME
 
-mpc_make.pl - Makes, cleans, or remakes your shizzle, whatever the weather.
+magic_make.pl - Makes, cleans, or remakes your shizzle, whatever the weather.
 
 =head1 SYNOPSIS
 
-[perl] mpc_make.pl [options] files/dirs
+[perl] magic_make.pl [options] files/dirs
 
  Options:
   --check-mpc / --nocheck-mpc When making a directory check build files up to date first, clean & regenerate if not.
@@ -440,13 +440,13 @@ file to be generated: it should all be aces.
 
 =over 8
 
-=item B<mpc_make.pl .>
+=item B<magic_make.pl .>
 
 Find any buildfiles of the default type (Makefile) in this directory or those below, find also any MPC files.
 If any MPC file is newer than the oldest buildfile (or there are no buildfiles) run clean on the existing buildfiles,
 regenerate fresh Makefiles. In any case: then build all projects.
 
-=item B<mpc_make.pl --squeaky --clean --check-mpc --type vc10 --src-co --nomake isocpp/>
+=item B<magic_make.pl --squeaky --clean --check-mpc --type vc10 --src-co --nomake isocpp/>
 
 Clean any existing Visual Studio 2010 files then delete them. Regenerate Visual Studio 2010 files suitable for use in a
 OpenSplice source checkout format (--src-co) but do not then make them.
