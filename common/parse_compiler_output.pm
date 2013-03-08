@@ -525,6 +525,38 @@ sub handle_compiler_output_line($) {
     return;
   }
 
+  if ($s =~ m/aborted/i ||
+        $s =~ m/cannot access/i ||
+        $s =~ m/nothing known about/ ||
+        $s =~ m/processing is incomplete/ ||
+        $s =~ m/syntax error near unexpected token/ ||
+        $s =~ m/Error processing command/ ||
+        $s =~ m/t connect to host/ ||
+        $s =~ m/Checksum mismatch for/ ||
+        $s =~ m/unknown user/ ||
+        $s =~ m/Failed to add file/ ||
+        $s =~ m/Failed to add directory/ ||
+        $s =~ m/error: Autoconf version/ ||
+        $s =~ m/m4 failed with/ ||
+        $s =~ m/^ERROR/ ||
+        $s =~ m/[^\w]+ERROR/ ||
+        $s =~ m/no such file/i ||
+        $s =~ m/BUILD FAILED/ ||
+        $s =~ m/Error: Another instance of MPC is using/ ||
+        $s =~ m/The following error occurred while executing this line/ ||
+        $s =~ m/No commands are being checked/ ||
+        $s =~ m/When Checking \"/ ||
+        $s =~ m/No commands are being executed/ )
+  {
+        $self->Output_Error ($s);
+  }
+  elsif ($s =~ m/WARNING/ ||
+            $s =~ m/IGNORING/ ||
+            $s =~ m/has not been defined/ )
+  {
+        $self->Output_Warning ($s);
+  }
+
   # OSPL additions from dcps_functions
   if ($s =~ m/No such file or directory/) {
     $self->Output_Error ($s);

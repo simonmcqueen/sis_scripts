@@ -32,7 +32,9 @@ $scriptname : Run prettify to produce warning / error logs.
 $scriptname [-h] [-f] [-d log directory]
     -d log dir   Specify an overnight build log directory to be processed.
                  The default named build files will be processed if found and
-                 all output weritten in that dir.
+                 all output written in that dir.
+    -e log dir   Specify a log directory to be processed. Anything found will be processed
+                 and all output written in that dir.
     -f file name Specify a single additional or alternate build log file to be
                  processed.
     -h / --help  Show this help output
@@ -53,11 +55,11 @@ sub HELP_MESSAGE
 
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
 
-our($opt_d, $opt_h, $opt_f);
+our($opt_d, $opt_e, $opt_h, $opt_f);
 
 my $tmpfilename = "BuildResults.txt";
 
-if (!getopts ('hd:f:') || $opt_h) {
+if (!getopts ('hd:e:f:') || $opt_h) {
     usage(*STDERR);
     exit (1);
 }
@@ -73,6 +75,17 @@ if (defined $opt_d)
     $tmpfilename = "ScoreboardBuildResults.txt"
 }
 
+if (defined $opt_e)
+{
+    chdir $opt_e || die "Couldn't chdir to $opt_e";
+    unlink("$tmpfilename");
+    my @myfiles = glob("*");
+    foreach my $file (@myfiles)
+    {
+        push @filenames, [$file, "Results File $file"];
+    }
+}
+
 if (defined $opt_f)
 {
     if (-e $opt_f)
@@ -86,7 +99,7 @@ if (defined $opt_f)
     }
 }
 
-if ((!defined($opt_f)) && (!defined($opt_d)))
+if ((!defined($opt_f)) && (!defined($opt_d)) && (!defined($opt_e)))
 {
     push @filenames, [ "&STDIN", "Reading from stdin" ];
 }
