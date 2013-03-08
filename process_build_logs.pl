@@ -132,11 +132,10 @@ if ($something_written)
                                                  substr($tmpfilename, 0, rindex($tmpfilename, ".txt")) );
     print STDOUT $totals_file_name . "_Totals.html\n";
 
-    my @errors = $processor->BuildErrors();
-    if (scalar( @errors ) > 0)
+    my $errors = $processor->ErrorCount();
+    if ($errors > 0)
     {
-        print STDERR "ERRORS FOUND IN LOG(s)";
-        return 1
+        exit 1;
     }
 }
 else

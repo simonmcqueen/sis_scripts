@@ -1211,6 +1211,12 @@ sub BuildErrors ($)
      return @{$self->{OUTPUT}[0]->{BUILD_ERROR_COUNTER}};
 }
 
+sub ErrorCount($)
+{
+    my $self = shift;
+    return $self->{OUTPUT}[0]->{ERROR_COUNTER};
+}
+
 ###############################################################################
 # Exposed subroutines
 #
