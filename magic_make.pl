@@ -212,11 +212,16 @@ sub call_build_file
   if ($type =~ /^vc/)
   {
     my $modeflag = '/build';
+    my $wincmd_shell = $ENV{COMSPEC};
+    if (! defined $wincmd_shell)
+    {
+        $wincmd_shell = 'cmd.exe';
+    }
     if (lc $mode eq 'clean')
     {
         $modeflag = '/clean';
     }
-    $command = "cmd /c devenv.com $_ $modeflag $config";
+    $command = "$wincmd_shell /c devenv.com $_ $modeflag $config";
   }
   else # ($type =~ /^make/)
   {
