@@ -149,6 +149,7 @@ if ($something_written)
     if ($errors > 0)
     {
         exit 1;
+        unlink("$tmpfilename");
     }
 }
 else
