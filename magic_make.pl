@@ -221,7 +221,11 @@ sub call_build_file
     {
         $modeflag = '/clean';
     }
-    $command = "$wincmd_shell /c devenv.com $_ $modeflag $config";
+    $command = "\"$wincmd_shell\" /c devenv.com $_ $modeflag $config";
+    if ($^O eq 'cygwin')
+    {
+        $command =~ s/\\/\//g;
+    }
   }
   else # ($type =~ /^make/)
   {
