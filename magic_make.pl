@@ -206,6 +206,7 @@ sub check_mpc_up_todate
 sub call_build_file
 {
   my $mode = shift(@_);
+  my $file = shift(@_);
   my $command;
   print "$scriptname: Proceeding to $mode $File::Find::name...\n";
   my $ret = 0;
@@ -221,7 +222,7 @@ sub call_build_file
     {
         $modeflag = '/clean';
     }
-    $command = "\"$wincmd_shell\" /c devenv.com $_ $modeflag $config";
+    $command = "\"$wincmd_shell\" /c devenv.com $file $modeflag $config";
     if ($^O eq 'cygwin')
     {
         $command =~ s/\\/\//g;
@@ -234,7 +235,7 @@ sub call_build_file
     {
         $clean = 'realclean';
     }
-    $command = "make $clean -f $_";
+    $command = "make $clean -f $file";
   }
   $ret = system($command);
   if ($ret)
