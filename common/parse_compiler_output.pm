@@ -36,7 +36,7 @@ sub handle_compiler_output_line($) {
 
   # Check for the subsection indicator
   # VC71 || GNU make || nmake || borland make
-  if ($s =~ m/^(?:\d+>)?------ Build started: Project: (.*), Config.*/ || $s =~ /GNUmakefile: (.*) MAKEFLAGS.*/ || $s =~ /nmake.exe\" \/f Makefile.(.*) CFG.*/ || $s =~ /make .* -f (.*).bor .*/ || $s =~ /Entering directory (.*)\/bld\/.*/ || $s =~ /Entering directory .*\/(ospl.\/.*)/ ) {
+  if ($s =~ m/^(?:\d+>)?------ Build started: Project: (.*), Config.*/ || $s =~ /GNUmakefile: (.*) MAKEFLAGS.*/ || $s =~ /nmake.exe\" \/f Makefile.(.*) CFG.*/ || $s =~ /make .* -f (.*).bor .*/ || $s =~ /^make.*Entering directory \`(.*)\/bld\/.*/ || $s =~ /Entering directory .*\`\/(ospl.\/.*)/ || $s =~ /^make.*Entering directory \`(.*)\'$/ ) {
     my $subsec = $1;
     $subsec .= " ($1)" if $s =~ /^(\d+)>---/;
     $self->Output_Subsection ($subsec);
