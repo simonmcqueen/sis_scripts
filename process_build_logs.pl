@@ -148,8 +148,8 @@ if ($something_written)
     my $errors = $processor->ErrorCount();
     if ($errors > 0)
     {
-        exit 1;
         unlink("$tmpfilename");
+        exit 1;
     }
 }
 else
