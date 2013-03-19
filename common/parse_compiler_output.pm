@@ -392,7 +392,14 @@ sub handle_compiler_output_line($) {
       return;
     }
 
-  if ($s =~ m/.*\d+\-\d+:? \([SI]\)/) {
+  # "Diagnostic messages have the following format when the -qsrcmsg option is specified:
+  # x - 15dd-nnn (severity) text."
+  # IBM compiler severity classification states:
+  # (E) Error : Compilation continues and object code is generated. Error conditions exist that the compiler can correct, but the program might not produce the expected results.
+  # (S) Severe Error : Compilation continues, but object code is not generated. Error conditions exist that the compiler cannot correct.
+  # (U) Unrecoverable : The compiler halts. An internal compiler error has occurred
+  # See further below for warnings.
+  if ($s =~ m/.*\d+\-\d+:? \([ESU]\)/) {
     # Again, IBM's compilers speak in code langauge
     if ($s =~ m/.*Compilation will proceed shortly./) {
       # Ignore licensing messages
@@ -503,7 +510,12 @@ sub handle_compiler_output_line($) {
       return;
     }
 
-  if ($s =~ m/^.*\d+\-\d+:? \(W\)/) {
+  # "Diagnostic messages have the following format when the -qsrcmsg option is specified:
+  # x - 15dd-nnn (severity) text."
+  # IBM compiler severity classification scheme:
+  # (I) Informational : Compilation continues. The message reports conditions found during compilation.
+  # (W) Warning : Compilation continues. The message reports valid but possibly unintended conditions.
+  if ($s =~ m/^.*\d+\-\d+:? \([WI]\)/) {
     # IBM's compilers don't say the word "warning" - check for their code
     if ($s =~ m/.*Compilation will proceed shortly./) {
       # Ignore licensing messages
