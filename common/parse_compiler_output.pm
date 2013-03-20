@@ -89,6 +89,12 @@ sub handle_compiler_output_line($) {
     return;
   }
 
+  if ($s =~ m/--fail-on-analysis-error/i || $s =~ m/--no-unsupported-warning/i) {
+    # Coverity logs have these strings in as options
+    $self->Output_Normal ($s);
+    return;
+  }
+
   if ($s =~ m/^Warning #\d+-D:/) {
     # This is a warning from HP aCC even though it may
     # contain the word "error" later on the line.
