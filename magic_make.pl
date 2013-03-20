@@ -214,15 +214,20 @@ sub call_build_file
   {
     my $modeflag = '/build';
     my $wincmd_shell = $ENV{COMSPEC};
+    my $visual_studio = $ENV{OSPL_DEVENV};
     if (! defined $wincmd_shell)
     {
         $wincmd_shell = 'cmd.exe';
+    }
+    if (! defined $visual_studio)
+    {
+        $visual_studio = 'devenv.com';
     }
     if (lc $mode eq 'clean')
     {
         $modeflag = '/clean';
     }
-    $command = "\"$wincmd_shell\" /c devenv.com $file $modeflag $config";
+    $command = "\"$wincmd_shell\" /c $visual_studio $file $modeflag $config";
     if ($^O eq 'cygwin')
     {
         $command =~ s/\\/\//g;
