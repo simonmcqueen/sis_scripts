@@ -62,6 +62,12 @@ sub handle_compiler_output_line($) {
     return;
   }
 
+  # Prelim to "MS-DOS style path detected" seems to happen in every configure
+  if ($s =~ /^cygwin warning:/) {
+    $self->Output_Normal ($s);
+    return;
+  }
+
   if ($s =~ m/^Warning:.* will be ignored/) {
     # Warning from RTI ddsgen, ignore because this is not important for us
     $self->Output_Normal ($s);
