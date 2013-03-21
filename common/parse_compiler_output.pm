@@ -146,7 +146,10 @@ sub handle_compiler_output_line($) {
     return;
   }
 
-  if ($s =~ m/\.depend\..*:\s+no\s+such\s+file/i) {
+  # Dependency check file not present. No problem.
+  if ($s =~ m/\.depend\..*:\s+no\s+such\s+file/i || # gmake / linux
+        $s =~ m/\.depend\..*:\s+file\s+or\s+directory\s+in\s+the\s+path/i ) #aix
+  {
     $self->Output_Normal ($s);
     return;
   }
