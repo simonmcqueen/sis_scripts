@@ -242,18 +242,24 @@ sub call_build_file
     }
     $command = "make $clean -f $file";
   }
+  print "$scriptname: calling - $command\n";
   $ret = system($command);
   if ($ret)
   {
     if (lc $mode ne 'clean' &&  !$carryon)
     {
-        die "ERROR: Trying to $mode $File::Find::name !!! command used: $command\n";
+        die "$scriptname: ERROR: return of $ret trying to $mode $File::Find::name !!! command used: $command\n";
     }
     else
     {
         print STDERR "$scriptname: ERROR/non zero return trying to $mode $File::Find::name. Keeping calm and carrying on.\n";
     }
   }
+  else
+  {
+    print "$scriptname: $mode $File::Find::name succeeded.\n";
+  }
+
 }
 
 sub if_build_file_clean
@@ -311,7 +317,7 @@ sub mpc_dir
 
   unshift(@mpc_args, '--type', "$type");
 
-  my $command = "mwc.pl @mpc_args\n";
+  my $command = "mwc.pl @mpc_args";
   print STDERR "$scriptname: Regenerating MPC files: $command\n";
   $ret = system($command);
   die "$scriptname: ERROR: Trying to run: $command !!!\n" if $ret;
