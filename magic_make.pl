@@ -240,7 +240,7 @@ sub call_build_file
     {
         $clean = 'realclean';
     }
-    $command = "make $clean -f $file";
+    $command = "make $clean -f $file CFG=$config";
   }
   print "$scriptname: calling - $command\n";
   $ret = system($command);
