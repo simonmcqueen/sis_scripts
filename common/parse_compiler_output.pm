@@ -215,6 +215,12 @@ sub handle_compiler_output_line($) {
       return;
   }
 
+  if ($s =~ m/^inflating:.*DDS\/ERRORCODE/) {
+      # We unzip a load of files with ERROR in the filename
+      $self->Output_Normal ($s);
+      return;
+  }
+
   if ($s =~ m/ is deprecated. use /) {
     # Among these are glibc warnings to stop using the deprecated
     # pthread_setstackaddr in favor of pthread_setstack.
