@@ -32,6 +32,7 @@ my $left_over_args;
 my $ret;
 my $type = "make";
 my $ospl_home = '';
+my $is_gcov = 0;
 ($ret, $left_over_args) = GetOptions('clean!' => \$clean,
                                      'check-mpc!' => \$check_mpc,
                                      'carryon!' => \$carryon,
@@ -46,16 +47,18 @@ my $ospl_home = '';
 
 my $config = 'Release';
 
+my $splice_target = $ENV{SPLICE_TARGET};
 if ($debug_override == '')
 {
   $config = 'Release';
-  my $splice_target = $ENV{SPLICE_TARGET};
   $config = 'Debug' if ($splice_target =~ 'dev' || $splice_target =~ 'debug');
 }
 else
 {
   $config = ($debug_override ? 'Debug' : 'Release');
 }
+
+$is_gcov = 1 if $splice_target =~ 'gcov';
 
 pod2usage(1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
@@ -318,6 +321,14 @@ sub mpc_dir
   my $ret = 0;
 
   unshift(@mpc_args, '--type', "$type");
+  if ($ospl_home ne '')
+  {
+    unshift(@mpc_args, '--ospl-home', "$ospl_home");
+  }
+  if ($is_gcov)
+  {
+    unshift(@mpc_args, '--value_template', 'coverage=1');
+  }
   my $command = "mwc.pl @mpc_args";
   print STDERR "$scriptname: Regenerating MPC files: $command\n";
   $ret = system($command);
@@ -334,6 +345,10 @@ sub mpc_file
   if ($type =~ /^vc/)
   {
     unshift(@mpc_args, '--value_template', "configurations=$config");
+  }
+  if ($is_gcov)
+  {
+    unshift(@mpc_args, '--value_template', 'coverage=1');
   }
   if ($ospl_home ne '')
   {
