@@ -314,28 +314,9 @@ sub squeaky_dir
   find(\&if_build_file_delete, "$dir");
 }
 
-sub mpc_dir
-{
-  my $dir = shift(@_);
-  my @mpc_args = @_;
-  my $ret = 0;
-
-  unshift(@mpc_args, '--type', "$type");
-  if ($ospl_home ne '')
-  {
-    unshift(@mpc_args, '--ospl-home', "$ospl_home");
-  }
-  if ($is_gcov)
-  {
-    unshift(@mpc_args, '--value_template', 'coverage=1');
-  }
-  my $command = "mwc.pl @mpc_args";
-  print STDERR "$scriptname: Regenerating MPC files: $command\n";
-  $ret = system($command);
-  die "$scriptname: ERROR: Trying to run: $command !!!\n" if $ret;
-}
-
-sub mpc_file
+# Run mwc.pl on either a file or a directory
+# The difference don't mean nothing on a big ship
+sub do_mpc
 {
   my $file = shift(@_);
   my @mpc_args = @_;
@@ -355,7 +336,7 @@ sub mpc_file
     unshift(@mpc_args, '--ospl-home', "$ospl_home");
   }
   my $command = "mwc.pl @mpc_args";
-  print STDERR "$scriptname: Generating MPC file: $command\n";
+  print STDERR "$scriptname: Generating MPC build file(s): $command\n";
   $ret = system($command);
   die "$scriptname: ERROR: Trying to run: $command !!!\n" if $ret;
 }
@@ -382,7 +363,7 @@ foreach my $file (@ARGV) {
     if ($check_mpc && check_mpc_up_todate($file))
     {
         clean_dir($file) if ! $is_clean;
-        mpc_dir($file, @ARGV);
+        do_mpc($file, @ARGV);
     }
     if ($make)
     {
@@ -395,7 +376,7 @@ foreach my $file (@ARGV) {
     $done_something = 1;
     if ($check_mpc && !$make && !$clean)
     {
-      mpc_file($file, @ARGV);
+      do_mpc($file, @ARGV);
     }
     else
     {
