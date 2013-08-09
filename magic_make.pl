@@ -327,10 +327,12 @@ sub do_mpc
   {
     unshift(@mpc_args, '--value_template', "configurations=$config");
   }
-  if ($is_gcov)
-  {
-    unshift(@mpc_args, '--value_template', 'coverage=1');
-  }
+  # @todo See OSPL-2875 Covergae compilation disabled.
+  # Uncomment to re-enable
+  #if ($is_gcov)
+  #{
+  #  unshift(@mpc_args, '--value_template', 'coverage=1');
+  #}
   if ($ospl_home ne '')
   {
     unshift(@mpc_args, '--ospl-home', "$ospl_home");
