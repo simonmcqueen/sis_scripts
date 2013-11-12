@@ -84,6 +84,43 @@ if ($^O eq 'VMS') {
 my $oldest_build_file;
 my $newest_mpc_file;
 
+# Used on windows only.
+my $wincmd_shell = $ENV{COMSPEC};
+my $visual_studio;
+if ($type =~ /^vc/)
+{
+  my @ext = split /;/, $ENV{PATHEXT} || '.exe;.com;.bat';
+  # I *would* put MSBuild first but we're pathing the wrong one in
+  # in configure
+  my @exes = ( 'devenv', 'VCExpress', 'MSBuild' );
+  studio:
+  {
+    foreach my $exe (@exes)
+    {
+      foreach my $p (File::Spec->path)
+      {
+        if (grep { -f and -x } map File::Spec->catfile($p, "$exe$_"), '', @ext)
+        {
+          $visual_studio = $exe;
+          last studio;
+        }
+      }
+    }
+  }
+  if (! defined $wincmd_shell)
+  {
+    $wincmd_shell = 'cmd.exe';
+  }
+  if (! defined $visual_studio)
+  {
+    $visual_studio = $ENV{OSPL_DEVENV};
+  }
+  if (! defined $visual_studio)
+  {
+    $visual_studio = 'devenv.com';
+  }
+}
+
 # Match a top-level build file on $_. e.g. a solution or
 # a Makefile. These are what you would normally invoke to build
 # some shizzle.
@@ -217,22 +254,14 @@ sub call_build_file
   my $ret = 0;
   if ($type =~ /^vc/)
   {
-    my $modeflag = '/build';
-    my $wincmd_shell = $ENV{COMSPEC};
-    my $visual_studio = $ENV{OSPL_DEVENV};
-    if (! defined $wincmd_shell)
-    {
-        $wincmd_shell = 'cmd.exe';
-    }
-    if (! defined $visual_studio)
-    {
-        $visual_studio = 'devenv.com';
-    }
+    my $is_msbuild = (lc($visual_studio) =~ m/msbuild/);
+    my $modeflag = $is_msbuild ? '/t:Build' : '/build';
     if (lc $mode eq 'clean')
     {
-        $modeflag = '/clean';
+        $modeflag = $is_msbuild ? '/t:Clean' : '/clean';
     }
-    $command = "\"$wincmd_shell\" /c $visual_studio $file $modeflag $config";
+    my $conf_pre = $is_msbuild ? '/p:Configuration=' : '';
+    $command = "\"$wincmd_shell\" /c $visual_studio $file $modeflag $conf_pre$config";
     if ($^O eq 'cygwin')
     {
         $command =~ s/\\/\//g;
@@ -284,6 +313,10 @@ sub clean_dir
 
 sub if_build_file_make
 {
+  if (-d && $_ ne ".")
+  {
+    $File::Find::prune = 1;
+  }
   if (is_workspace_file ||
       ($exhaustive && is_project_file))
   {
@@ -294,6 +327,7 @@ sub if_build_file_make
 sub make_dir
 {
   my $dir = shift(@_);
+
   find(\&if_build_file_make, "$dir");
 }
 
