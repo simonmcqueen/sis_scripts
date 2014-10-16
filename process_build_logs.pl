@@ -37,12 +37,13 @@ $scriptname [-h] [-f] [-d log directory]
                  and all output written in that dir.
     -f file name Specify a single additional or alternate build log file to be
                  processed.
+    -t           Process test results
     -h / --help  Show this help output
 Iff neither -d or -f are set input is read from STDIN. Emits 'Totals' file name
 on STDOUT & returns 0 if no errors are found in any logs.
 
 Hint, try:
-    make 2>&1 | $scriptname | xargs firefox &
+    make 2>&1 | $scriptname | xargs lynx
 
 EOT
 }
@@ -55,11 +56,11 @@ sub HELP_MESSAGE
 
 $Getopt::Std::STANDARD_HELP_VERSION = 1;
 
-our($opt_d, $opt_e, $opt_h, $opt_f);
+our($opt_d, $opt_e, $opt_h, $opt_f, $opt_t);
 
 my $tmpfilename = "BuildResults.txt";
 
-if (!getopts ('hd:e:f:') || $opt_h) {
+if (!getopts ('hd:e:f:t') || $opt_h) {
     usage(*STDERR);
     exit (1);
 }
@@ -104,6 +105,12 @@ if ((!defined($opt_f)) && (!defined($opt_d)) && (!defined($opt_e)))
     push @filenames, [ "&STDIN", "Reading from stdin" ];
 }
 
+my $output_type = 'Compile';
+if ($opt_t)
+{
+  $output_type = 'Test';
+}
+
 unlink("$tmpfilename");
 my $results_file_handle = new FileHandle ("$tmpfilename", 'w');
 
@@ -113,7 +120,7 @@ my $something_written = 0;
 
 for my $filename ( @filenames )
 {
-    print $results_file_handle "#################### Compile ($filename->[1]) [" . (scalar gmtime(time())) . " UTC]\n";
+    print $results_file_handle "#################### $output_type ($filename->[1]) [" . (scalar gmtime(time())) . " UTC]\n";
     open READFILE, "<$filename->[0]";
     while (<READFILE>)
     {
