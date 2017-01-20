@@ -534,7 +534,15 @@ sub handle_compiler_output_line($) {
       || $s =~ m/^.*\.(h|i|inl|hpp|ipp|cpp|java): /)
     {
       # Catch any other warnings
-      $self->Output_Warning ($s);
+      if ($s =~ m/NO_WARNING/)
+      {
+
+        $self->Output_Normal ($s);
+      }
+      else
+      {
+        $self->Output_Warning ($s);
+      }
       return;
     }
 
@@ -594,7 +602,17 @@ sub handle_compiler_output_line($) {
             $s =~ m/IGNORING/ ||
             $s =~ m/has not been defined/ )
   {
-        $self->Output_Warning ($s);
+
+    # Catch any other warnings
+    if ($s =~ m/NO_WARNING/)
+    {
+      $self->Output_Normal ($s);
+    }
+    else
+    {
+      $self->Output_Warning ($s);
+    }
+    return;
   }
 
   # OSPL additions from dcps_functions
